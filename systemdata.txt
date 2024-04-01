@@ -1,0 +1,276 @@
+from picamera import PiCamera
+from time import sleep
+
+camera = PiCamera()
+camera.resolution = (1280, 720)
+
+camera.start_preview()
+sleep(2)
+camera.capture('test.jpg')
+camera.stop_preview()
+
+##################################
+
+#Connection
+# 1 - ground
+# 2 - 5v
+# 3 - resistor
+# 4 - 32
+# 5 - ground
+# 6 - 26
+# 7 - 
+# 8 -
+# 9 - 
+# 10 -
+# 11 - 24
+# 12 - 22
+# 13 - 18
+# 14 - 16
+# 15 - 5v
+# 16 - ground
+
+#github - https://github.com/adafruit/Adafruit_Python_CharLCD.git
+
+import Adafruit_CharLCD as lcd
+import RPi.GPIO as gpio
+
+gpio.setmode(gpio.BOARD) #gpio.BCM
+lcd1 = 32 # 12
+lcd2 = 26 # 7
+lcd3 = 24 # 8
+lcd4 = 22 # 25
+lcd5 = 18 # 24
+lcd6 = 16 # 23
+
+lcd = lcd.Adafruit_CharLCD(lcd1, lcd2, lcd3, lcd4, lcd5, lcd6, 0, 16, 2)
+lcd.message("Hello World")
+#
+import time
+import board
+import digitalio
+import adafruit_character_lcd.character_lcd as clcd
+
+col = 16
+line = 2
+l1 = digitalio.DigitalInOut(board.D26)
+l2 = board.D19
+l3 = 25
+l4 = 24
+l5 = 22
+l6 = 27
+backlight = digitalio.DigitalInOut(board.D4)
+
+cd = clcd.Character_LCD_Mono(l1, l2, l3, l4, l5, l6, col, line, backlight)
+
+cd.message("Hello")
+time.sleep(5)
+cd.clear()
+
+######################################
+
+#Connection
+
+VCC = 2
+GND = 6
+DIN = 19
+CS = 24
+CLK = 23
+
+# github - https://github.com/rm-hull/luma.led_matrix
+# github - https://github.com/freedomwebtech/max7219voicecontrol
+
+# ls -> sudo chmod install.sh -> sudo ./install.sh
+# sudo nano ledmatrix.py
+
+import time
+from luma.led_matrix.device import max7219
+from luma.core.interface.serial import spi, noop
+from luma.core.legacy import show_message
+from luma.core.legacy.Font import proportional
+
+def demo():
+    serial = spi(port = 0, device=0, gpio=noop())
+    device = max7219(serial)
+    print("Device Created")
+
+    message = "Krishna"
+    print(message)
+    show_message(device, message, fill="white", font=proportional, scroll_delay=0.05)
+    time.sleep(0.5)
+
+if __name__ == "__main__":
+    try:
+        demo()
+    except KeyboardInterrupt:
+        pass
+
+#########################################
+
+import RPi.GPIO as gpio
+from time import sleep
+
+gpio.setmode(gpio.BOARD)
+gpio.setup(15, gpio.OUT)
+gpio.output(15, False)
+try:
+    while True:
+        gpio.output(15, True)
+        time.sleep(1)
+        gpio.output(15, False)
+        time.sleep(1)
+except KeyboardInterrupt:
+    gpio.output(15, False)
+    gpio.cleanup()
+    
+
+##########################################
+
+import RPi.GPIO as gpio
+from time import sleep
+
+gpio.setmode(gpio.BOARD)
+gpio.setup(11, gpio.OUT)
+gpio.setup(13, gpio.OUT)
+gpio.setup(15, gpio.OUT)
+gpio.setup(19, gpio.OUT)
+
+gpio.output(11, False)
+gpio.output(13, False)
+gpio.output(15, False)
+gpio.output(19, False)
+
+def pattern(l1, l2, l3, l4):
+    gpio.output(11, l1)
+    gpio.output(13, l2)
+    gpio.output(15, l3)
+    gpio.output(19, l4)
+    
+try:
+    while:
+        pattern(1,0,1,0)
+        sleep(1)
+        pattern(0,1,0,1)
+        sleep(1)
+except KeyboardInterrupt:
+    gpio.output(11, False)
+    gpio.output(13, False)
+    gpio.output(15, False)
+    gpio.output(19, False)
+    gpio.cleanup()
+
+##########################################
+
+#Connection
+# VDD - 17
+# GND - 9
+# SCL - 5
+# SDA - 3
+
+#Enable I2C
+
+# git - https://github.com/adafruit/Adafruit_Python_ADS1x15
+# sudo apt-get install python3-matplotlib
+# sudo pip install drawnow
+
+import time
+import matplotlib.pyplot as plt
+from drawnow import *
+import Adafruit_ADS1x15
+
+adc = Adafruit_ADS1x15.ADS1115()
+gain = 1
+val = []
+cnt = 0
+plt.ion()
+adc.start_adc(0, gain=gain)
+print("Reading ADS1x15 channel 0")
+
+def makefig():
+    plt.ylim(-5000, 5000)
+    plt.grid()
+    plt.ylabel("ADC Outputs")
+    plt.plot(val, 'ro-', label='cahnnel 0')
+    plt.legend(loc='lower right')
+
+while True:
+    value = adc.get_last_result()
+    print("Channel 0: ", value)
+    time.sleep(0.5)
+    val.append(int(value))
+    drawnow(makefig)
+    plt.pause(0.0001)
+    cnt += 1
+    if(cnt > 50):
+        val.pop(0)
+
+########################################
+
+# pip install telepot
+
+import sys
+import time
+import random
+import datetime
+import telepot
+import RPi.GPIO as gpio
+from telepot.loop import MessageLoop
+
+red = 40
+now = datetime.datetime.now()
+gpio.setmode(gpio.BOARD)
+gpio.setup(red, gpio.OUT)
+gpio.output(red, False)
+
+def action(msg):
+    chat_id = msg['chat']['id']
+    command = msg['text']
+    if 'On' in command:
+        message = 'Turn On' + str(red)
+        gpio.output(red, True)
+        bot.sendMessage(chat_id, message)
+    if 'Off' in command:
+        message = 'Turn Off' + str(red)
+        gpio.output(red, False)
+        telepot.sendMessage(chat_id, message)
+bot = telepot.Bot('id')
+print(bot.getMe())
+MessageLoop(bot, action).run_as_thread()
+print("Im listening")
+while 1:
+    time.sleep(1)
+
+
+#############################################
+
+import t1637
+from time import sleep
+import thread
+
+disp = t1637.T1637(CLK=21, DIO=20, brightness=1.0)
+try:
+    disp.StartClock(military_time=True)
+    disp.setBrightness(1.0)
+    while True:
+        disp.ShowDoublepoint(True)
+        sleep(1)
+        disp.ShowDoublepoint(False)
+except:
+    disp.StopClock()
+    thread.interrupt_main()
+    disp.cleanup()
+
+#############################################
+
+from picamera import PiCamera
+from time import sleep
+
+camera = PiCamera()
+camera.resolution = (1280, 720)
+
+camera.start_preview()
+sleep(2)
+camera.start_recording('test.h264')
+sleep(10)
+camera.stop_recording()
+camera.stop_preview()
+camera.close()
